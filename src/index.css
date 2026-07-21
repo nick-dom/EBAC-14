@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+/* ============================================================
+   NEXUS VERSE — Design tokens
+   Paleta cyberpunk/arcade: vazio espacial, violeta elétrico,
+   ciano neon e magenta como destaque.
+   ============================================================ */
+@theme {
+  --color-void: #05050c;
+  --color-void-soft: #0a0a16;
+  --color-surface: #10101f;
+  --color-surface-2: #171728;
+  --color-border-glow: #2a2a45;
+
+  --color-violet: #8b5cf6;
+  --color-violet-soft: #a78bfa;
+  --color-cyan: #22d3ee;
+  --color-magenta: #f472b6;
+  --color-lime: #a3e635;
+
+  --color-ink: #f1f0ff;
+  --color-muted: #9291b5;
+  --color-muted-2: #5f5e80;
+
+  --font-display: "Orbitron", "Rajdhani", sans-serif;
+  --font-body: "Rajdhani", "Segoe UI", sans-serif;
+  --font-mono: "Space Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ---------- Fundo com grid neon + glow ---------- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(139, 92, 246, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 90%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  background: radial-gradient(circle at 15% 10%, rgba(139, 92, 246, 0.25), transparent 45%),
+    radial-gradient(circle at 85% 25%, rgba(34, 211, 238, 0.18), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(244, 114, 182, 0.12), transparent 50%);
+}
+
+/* ---------- Tipografia utilitária ---------- */
+.font-display {
+  font-family: var(--font-display);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* ---------- Cartão com borda de vidro + glow no hover ---------- */
+.glass-card {
+  background: linear-gradient(180deg, rgba(23, 23, 40, 0.9), rgba(16, 16, 31, 0.9));
+  border: 1px solid var(--color-border-glow);
+  backdrop-filter: blur(6px);
+  position: relative;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.glass-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.25), 0 20px 40px -20px rgba(139, 92, 246, 0.45);
+}
+
+/* ---------- Botão neon primário ---------- */
+.btn-neon {
+  position: relative;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, var(--color-violet), #6d28d9);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.5), 0 10px 30px -10px rgba(139, 92, 246, 0.7);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.btn-neon:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.7), 0 14px 34px -10px rgba(139, 92, 246, 0.85);
+}
+.btn-neon:active {
+  transform: translateY(0);
+}
+
+/* ---------- Contorno neon secundário (outline) ---------- */
+.btn-outline-neon {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  color: var(--color-cyan);
+  transition: all 0.2s ease;
+}
+.btn-outline-neon:hover {
+  background: rgba(34, 211, 238, 0.1);
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 24px -6px rgba(34, 211, 238, 0.6);
+}
+
+/* ---------- Texto com gradiente ---------- */
+.text-gradient {
+  background: linear-gradient(90deg, var(--color-violet-soft), var(--color-cyan) 60%, var(--color-magenta));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Linha divisória com brilho central ---------- */
+.divider-glow {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.6), transparent);
+}
+
+/* ---------- Scrollbar customizada ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-void);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--color-violet), var(--color-cyan));
+  border-radius: 999px;
+}
+
+/* ---------- Skeleton de carregamento ---------- */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.skeleton {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* ---------- Badge de gênero ---------- */
+.badge {
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ---------- Foco acessível ---------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .skeleton { animation: none; }
+  .glass-card, .btn-neon, .btn-outline-neon { transition: none; }
+}
