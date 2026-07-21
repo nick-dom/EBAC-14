@@ -57,7 +57,7 @@ npm install
 npm run dev
 ```
 
-Depois é só abrir http://localhost:5173.
+Depois é só abrir o local host.
 
 Outros comandos úteis:
 
