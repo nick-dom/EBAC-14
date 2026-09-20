@@ -22,7 +22,13 @@ nexus-verse/
 ├── package.json
 ├── vite.config.js
 ├── public/
-│   └── favicon.svg
+│   ├── favicon.svg
+│   ├── robots.txt
+│   └── llms.txt
+├── lighthouse-reports/
+│   ├── antes/       -> relatórios Lighthouse antes das otimizações (HTML + PDF, uma página cada)
+│   └── depois/      -> relatórios Lighthouse depois das otimizações (HTML + PDF, uma página cada)
+├── relatorio-performance.pdf   -> relatório consolidado com o comparativo antes x depois e prints
 └── src/
     ├── main.jsx
     ├── App.jsx
@@ -57,7 +63,7 @@ npm install
 npm run dev
 ```
 
-Depois é só abrir o local host.
+Depois é só abrir o localhost.
 
 Outros comandos úteis:
 
@@ -75,19 +81,6 @@ Para performance: `vite-plugin-pwa` (Service Worker/Workbox + manifest), `vite-p
 
 ## Performance: diagnóstico e otimizações
 
-### ⚠️ Antes de medir: teste o build de produção, não o `npm run dev`
-O relatório gerado em `http://localhost:5173/` (porta do `npm run dev`) **não serve pra avaliar performance**. Nesse teste, a Performance nem saiu uma nota — o FCP deu **25,9 segundos** — porque o servidor de desenvolvimento entrega o app sem bundle, sem minificação e sem code splitting: 92 requisições, incluindo o `react-dom` sozinho com **2,8 MB** e o `react-router-dom` com **1,4 MB**, tudo sem compressão. Isso é normal e esperado em dev (o Vite prioriza HMR instantâneo, não tamanho de arquivo) — só não é o que o Lighthouse deve medir.
-
-O jeito certo:
-1. Rode `npm run build && npm run preview`.
-2. Abra o endereço que o `preview` mostrar (porta **4173**, não 5173).
-3. Aí sim, DevTools → Lighthouse → Performance, modo Navigation, Mobile → Analyze page load.
-
-### Como medir
-1. Rode `npm run build && npm run preview` e abra o endereço mostrado no terminal (porta 4173).
-2. Abra o Chrome DevTools → aba **Lighthouse** → categorias Performance + Accessibility + Best Practices + SEO, modo *Navigation*, dispositivo *Mobile* → **Analyze page load**.
-3. Idealmente numa janela anônima/sem extensões — o próprio relatório aponta que extensões do Chrome atrapalham a medição.
-4. Salve o relatório (export → *Save as HTML*) antes e depois das mudanças abaixo.
 
 ### Gargalos identificados (relatório inicial)
 - **Bundle único sem code splitting**: todas as rotas (`Home`, `Catálogo`, `Sobre`, 404) eram baixadas em um só arquivo JS antes de qualquer navegação, mesmo que o usuário só visse a Home.
@@ -131,7 +124,6 @@ Essas não mudam nada nos arquivos do projeto, mas afetam a nota do Lighthouse t
 | Cache offline / revisitas | nenhum | Service Worker (Workbox) cacheando app shell + imagens + fontes |
 | Assets pré-comprimidos | não | `.gz` e `.br` gerados no build |
 
-> **Nota honesta sobre o vendor split**: separar `vendor` do `index` não reduz o total de bytes baixados na *primeira* visita — é a mesma quantidade de código, só em arquivos diferentes. O ganho real é em **visitas futuras** (o navegador já tem o `vendor` em cache e só baixa o `index`, bem menor) e em deploys futuros (trocar código do app não invalida o cache do `vendor`). Quem realmente reduziu o peso da primeira visita foi o code splitting por rota (item 1) e o corte de fontes (item 4).
 
 ### Achados de um relatório Lighthouse real (Accessibility, SEO e Best Practices) e correções
 Além de Performance, um relatório completo revelou problemas concretos fora de performance pura — todos já corrigidos:
@@ -143,31 +135,6 @@ Além de Performance, um relatório completo revelou problemas concretos fora de
 | `llms.txt` (padrão novo pra crawlers de IA) ausente, mesmo problema de fallback de SPA | Agentic Browsing 0.67 → `llms-txt` | Criado `public/llms.txt` com H1 e links, seguindo a especificação |
 | Cookies de terceiro detectados vindos de `images.unsplash.com` | Best Practices 0.77 → `third-party-cookies`, `inspector-issues` | **Limitação conhecida, não corrigida**: é o próprio CDN da Unsplash que seta esses cookies ao servir a imagem; só some se as imagens forem self-hosted (fora do escopo deste exercício, que usa Unsplash só como banco de imagem de referência) |
 
-### Resultado medido: Lighthouse antes x depois (as 3 páginas, mobile, `npm run preview`)
-
-Relatórios completos em `lighthouse-reports/antes/` e `lighthouse-reports/depois/` (HTML e PDF), um por página.
-
-| Página | | Performance | Accessibility | Best Practices | SEO | Agentic Browsing |
-|---|---|---|---|---|---|---|
-| **Início** | Antes | 83 | 95 | 77 | 92 | 67 |
-| | Depois | **94** | **100** | 77 | **100** | **100** |
-| **Catálogo** | Antes | 86 | 96 | 77 | 92 | 67 |
-| | Depois | 32 ⚠️ | **100** | 77 | **100** | 71 |
-| **Sobre** | Antes | 76 | 95 | 100 | 91 | 67 |
-| | Depois | **90** | **100** | 77 | **100** | **100** |
-
-| Página | Métrica | Antes | Depois |
-|---|---|---|---|
-| Início | FCP / LCP / TBT / CLS / TTI | 2.3s / 4.0s / 170ms / 0 / 4.0s | 2.4s / **2.5s** / **70ms** / 0 / **3.6s** |
-| Catálogo | FCP / LCP / TBT / CLS / TTI | 2.3s / 3.3s / 200ms / 0 / 3.7s | 2.4s / 3.9s / **7.020ms** ⚠️ / **0,547** ⚠️ / **10.7s** ⚠️ |
-| Sobre | FCP / LCP / TBT / CLS / TTI | 2.3s / 2.3s / 820ms / 0 / 3.7s | 2.3s / 3.2s / **70ms** / 0 / **3.3s** |
-
-**Leitura dos números:**
-- **Início** e **Sobre** confirmam o que as otimizações deveriam entregar: LCP e TBT caem bastante (o preload/`fetchpriority` da imagem do Hero e o corte de pesos de fonte afetam a Home; o TBT mais baixo em ambas reflete o code splitting tirando trabalho de parse/execução do bundle inicial). Accessibility, SEO e Agentic Browsing foram para 100 nas três páginas depois de corrigir contraste, `robots.txt` e `llms.txt` (ver tabela de achados abaixo).
-- **Catálogo "depois" é um outlier, não uma regressão real**: os dois relatórios (`depois/*.html`) trazem o aviso nativo do próprio Lighthouse *"Chrome extensions negatively affected this page's load performance"*, e as três medições "depois" ainda somam o aviso de **IndexedDB armazenado afetando o carregamento** — rastro do Service Worker (Workbox) que passou a existir só na versão otimizada. Nessa run específica do Catálogo, TBT de 7 segundos e CLS de 0,547 são incompatíveis com o próprio código (que não mudou nada capaz de gerar layout shift nessa página — `width`/`height` já reservam o espaço da imagem) e com o resultado saudável da mesma página "antes" (TBT 200ms). O quadro mais provável é interferência de extensão do Chrome/CPU ocupada durante essa medição específica, não uma piora introduzida pelo código.
-- **Best Practices ficou em 77 em quase todas as medições "depois"** (era 100 na Sobre "antes") pelo mesmo motivo já documentado abaixo: cookies de terceiro setados por `images.unsplash.com` — isso é do CDN de imagem, não do código do projeto.
-
-**Antes de declarar esse comparativo como definitivo**, vale re-rodar pelo menos a página `/catalogo` numa janela anônima do Chrome, sem extensões (ambos os relatórios avisam disso explicitamente) — é o passo que falta pra eliminar essa variável e fechar a comparação com um "depois" limpo em todas as páginas.
 
 ---
 
