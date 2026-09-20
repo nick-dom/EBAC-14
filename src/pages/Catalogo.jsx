@@ -14,7 +14,16 @@ export default function Catalogo() {
 
   // ---- state dos controles de busca/filtro ----
   const [busca, setBusca] = useState("");
+  const [buscaDebounced, setBuscaDebounced] = useState("");
   const [generoFiltro, setGeneroFiltro] = useState("Todos");
+
+  // Debounce: só atualiza o valor usado no filtro 300ms depois da
+  // última tecla digitada, evitando recalcular a lista a cada letra
+  // (e evitaria uma requisição por letra numa busca real via API).
+  useEffect(() => {
+    const timer = setTimeout(() => setBuscaDebounced(busca), 300);
+    return () => clearTimeout(timer);
+  }, [busca]);
 
   // ---- simulação de chamada de API com useEffect + setTimeout ----
   useEffect(() => {
@@ -45,11 +54,11 @@ export default function Catalogo() {
 
   const jogosFiltrados = useMemo(() => {
     return jogos.filter((jogo) => {
-      const combinaBusca = jogo.nome.toLowerCase().includes(busca.toLowerCase());
+      const combinaBusca = jogo.nome.toLowerCase().includes(buscaDebounced.toLowerCase());
       const combinaGenero = generoFiltro === "Todos" || jogo.genero === generoFiltro;
       return combinaBusca && combinaGenero;
     });
-  }, [jogos, busca, generoFiltro]);
+  }, [jogos, buscaDebounced, generoFiltro]);
 
   return (
     <main>

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Star, Tag } from "lucide-react";
 
 /**
@@ -6,7 +7,7 @@ import { Star, Tag } from "lucide-react";
  * imagem e descricao são obrigatórios; genero, avaliacao e estudio
  * são opcionais e usados apenas para enriquecer o visual quando existem.
  */
-export default function GameCard({
+function GameCard({
   nome,
   preco,
   imagem,
@@ -21,14 +22,26 @@ export default function GameCard({
     currency: "BRL",
   }).format(preco);
 
+  // Gera variantes menores da mesma imagem (a Unsplash aceita &w= dinâmico)
+  // pra o navegador escolher o tamanho certo em vez de sempre baixar 800px.
+  const baseUrl = imagem.split("&w=")[0];
+  const srcSet = [400, 600, 800]
+    .map((w) => `${baseUrl}&w=${w}&q=80 ${w}w`)
+    .join(", ");
+
   return (
     <article className="glass-card group flex h-full flex-col overflow-hidden rounded-xl">
       {/* Capa */}
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <img
           src={imagem}
+          srcSet={srcSet}
+          sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 90vw"
+          width={800}
+          height={600}
           alt={`Arte de capa de ${nome}`}
           loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-void via-void/10 to-transparent" />
@@ -76,3 +89,8 @@ export default function GameCard({
     </article>
   );
 }
+
+// React.memo evita re-renderizar cada card quando o pai (Catálogo)
+// re-renderiza por causa de outro state (ex: digitando na busca) mas
+// as props deste card específico não mudaram.
+export default memo(GameCard);

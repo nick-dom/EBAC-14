@@ -15,6 +15,8 @@ export default function Hero() {
         <img
           src="https://images.unsplash.com/photo-1754851539824-5a87c5c7cb86?auto=format&fit=crop&w=1800&q=80"
           alt=""
+          fetchPriority="high"
+          decoding="async"
           className="h-full w-full object-cover opacity-30"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-void/40 via-void to-void" />
