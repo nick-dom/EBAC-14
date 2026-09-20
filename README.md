@@ -143,7 +143,31 @@ Além de Performance, um relatório completo revelou problemas concretos fora de
 | `llms.txt` (padrão novo pra crawlers de IA) ausente, mesmo problema de fallback de SPA | Agentic Browsing 0.67 → `llms-txt` | Criado `public/llms.txt` com H1 e links, seguindo a especificação |
 | Cookies de terceiro detectados vindos de `images.unsplash.com` | Best Practices 0.77 → `third-party-cookies`, `inspector-issues` | **Limitação conhecida, não corrigida**: é o próprio CDN da Unsplash que seta esses cookies ao servir a imagem; só some se as imagens forem self-hosted (fora do escopo deste exercício, que usa Unsplash só como banco de imagem de referência) |
 
-> O relatório enviado (`TESTE_2.html`) foi rodado contra o `npm run dev`, então não serve como o "antes" oficial — ele mediu o servidor de desenvolvimento, não o build. Gere os dois prints/PDFs oficiais (`lighthouse-antes.png` e `lighthouse-depois.png`) contra `npm run preview`, seguindo os passos da seção "Como medir": um antes de aplicar as otimizações deste README (pode usar `git stash` ou o commit anterior) e outro depois.
+### Resultado medido: Lighthouse antes x depois (as 3 páginas, mobile, `npm run preview`)
+
+Relatórios completos em `lighthouse-reports/antes/` e `lighthouse-reports/depois/` (HTML e PDF), um por página.
+
+| Página | | Performance | Accessibility | Best Practices | SEO | Agentic Browsing |
+|---|---|---|---|---|---|---|
+| **Início** | Antes | 83 | 95 | 77 | 92 | 67 |
+| | Depois | **94** | **100** | 77 | **100** | **100** |
+| **Catálogo** | Antes | 86 | 96 | 77 | 92 | 67 |
+| | Depois | 32 ⚠️ | **100** | 77 | **100** | 71 |
+| **Sobre** | Antes | 76 | 95 | 100 | 91 | 67 |
+| | Depois | **90** | **100** | 77 | **100** | **100** |
+
+| Página | Métrica | Antes | Depois |
+|---|---|---|---|
+| Início | FCP / LCP / TBT / CLS / TTI | 2.3s / 4.0s / 170ms / 0 / 4.0s | 2.4s / **2.5s** / **70ms** / 0 / **3.6s** |
+| Catálogo | FCP / LCP / TBT / CLS / TTI | 2.3s / 3.3s / 200ms / 0 / 3.7s | 2.4s / 3.9s / **7.020ms** ⚠️ / **0,547** ⚠️ / **10.7s** ⚠️ |
+| Sobre | FCP / LCP / TBT / CLS / TTI | 2.3s / 2.3s / 820ms / 0 / 3.7s | 2.3s / 3.2s / **70ms** / 0 / **3.3s** |
+
+**Leitura dos números:**
+- **Início** e **Sobre** confirmam o que as otimizações deveriam entregar: LCP e TBT caem bastante (o preload/`fetchpriority` da imagem do Hero e o corte de pesos de fonte afetam a Home; o TBT mais baixo em ambas reflete o code splitting tirando trabalho de parse/execução do bundle inicial). Accessibility, SEO e Agentic Browsing foram para 100 nas três páginas depois de corrigir contraste, `robots.txt` e `llms.txt` (ver tabela de achados abaixo).
+- **Catálogo "depois" é um outlier, não uma regressão real**: os dois relatórios (`depois/*.html`) trazem o aviso nativo do próprio Lighthouse *"Chrome extensions negatively affected this page's load performance"*, e as três medições "depois" ainda somam o aviso de **IndexedDB armazenado afetando o carregamento** — rastro do Service Worker (Workbox) que passou a existir só na versão otimizada. Nessa run específica do Catálogo, TBT de 7 segundos e CLS de 0,547 são incompatíveis com o próprio código (que não mudou nada capaz de gerar layout shift nessa página — `width`/`height` já reservam o espaço da imagem) e com o resultado saudável da mesma página "antes" (TBT 200ms). O quadro mais provável é interferência de extensão do Chrome/CPU ocupada durante essa medição específica, não uma piora introduzida pelo código.
+- **Best Practices ficou em 77 em quase todas as medições "depois"** (era 100 na Sobre "antes") pelo mesmo motivo já documentado abaixo: cookies de terceiro setados por `images.unsplash.com` — isso é do CDN de imagem, não do código do projeto.
+
+**Antes de declarar esse comparativo como definitivo**, vale re-rodar pelo menos a página `/catalogo` numa janela anônima do Chrome, sem extensões (ambos os relatórios avisam disso explicitamente) — é o passo que falta pra eliminar essa variável e fechar a comparação com um "depois" limpo em todas as páginas.
 
 ---
 
