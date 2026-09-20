@@ -75,10 +75,19 @@ Para performance: `vite-plugin-pwa` (Service Worker/Workbox + manifest), `vite-p
 
 ## Performance: diagnóstico e otimizações
 
+### ⚠️ Antes de medir: teste o build de produção, não o `npm run dev`
+O relatório gerado em `http://localhost:5173/` (porta do `npm run dev`) **não serve pra avaliar performance**. Nesse teste, a Performance nem saiu uma nota — o FCP deu **25,9 segundos** — porque o servidor de desenvolvimento entrega o app sem bundle, sem minificação e sem code splitting: 92 requisições, incluindo o `react-dom` sozinho com **2,8 MB** e o `react-router-dom` com **1,4 MB**, tudo sem compressão. Isso é normal e esperado em dev (o Vite prioriza HMR instantâneo, não tamanho de arquivo) — só não é o que o Lighthouse deve medir.
+
+O jeito certo:
+1. Rode `npm run build && npm run preview`.
+2. Abra o endereço que o `preview` mostrar (porta **4173**, não 5173).
+3. Aí sim, DevTools → Lighthouse → Performance, modo Navigation, Mobile → Analyze page load.
+
 ### Como medir
-1. Rode `npm run build && npm run preview` e abra o endereço mostrado no terminal.
-2. Abra o Chrome DevTools → aba **Lighthouse** → categoria Performance, modo *Navigation*, dispositivo *Mobile* → **Analyze page load**.
-3. Repita para `/` (Home) e salve o relatório (botão de export → *Save as HTML* ou print da tela) antes e depois das mudanças abaixo.
+1. Rode `npm run build && npm run preview` e abra o endereço mostrado no terminal (porta 4173).
+2. Abra o Chrome DevTools → aba **Lighthouse** → categorias Performance + Accessibility + Best Practices + SEO, modo *Navigation*, dispositivo *Mobile* → **Analyze page load**.
+3. Idealmente numa janela anônima/sem extensões — o próprio relatório aponta que extensões do Chrome atrapalham a medição.
+4. Salve o relatório (export → *Save as HTML*) antes e depois das mudanças abaixo.
 
 ### Gargalos identificados (relatório inicial)
 - **Bundle único sem code splitting**: todas as rotas (`Home`, `Catálogo`, `Sobre`, 404) eram baixadas em um só arquivo JS antes de qualquer navegação, mesmo que o usuário só visse a Home.
@@ -124,7 +133,17 @@ Essas não mudam nada nos arquivos do projeto, mas afetam a nota do Lighthouse t
 
 > **Nota honesta sobre o vendor split**: separar `vendor` do `index` não reduz o total de bytes baixados na *primeira* visita — é a mesma quantidade de código, só em arquivos diferentes. O ganho real é em **visitas futuras** (o navegador já tem o `vendor` em cache e só baixa o `index`, bem menor) e em deploys futuros (trocar código do app não invalida o cache do `vendor`). Quem realmente reduziu o peso da primeira visita foi o code splitting por rota (item 1) e o corte de fontes (item 4).
 
-> As pontuações de Lighthouse (Performance/LCP/TBT/CLS) do "antes" e "depois", em print ou PDF, ficam nesta pasta como `lighthouse-antes.png` e `lighthouse-depois.png` — gere seguindo os 3 passos da seção "Como medir" acima, num commit antes das mudanças de performance e outro depois.
+### Achados de um relatório Lighthouse real (Accessibility, SEO e Best Practices) e correções
+Além de Performance, um relatório completo revelou problemas concretos fora de performance pura — todos já corrigidos:
+
+| Achado | Categoria → audit | Correção aplicada |
+|---|---|---|
+| Contraste insuficiente no texto do rodapé (`#5f5e80` sobre `#0a0a16` = 3,18:1, mínimo é 4,5:1) | Accessibility 0.95 → `color-contrast` | Token `--color-muted-2` clareado pra `#7f7ea3` (contraste 5,07:1) em `src/index.css` |
+| `robots.txt` inválido — como o arquivo não existia, o fallback de SPA devolvia o `index.html` no lugar, e o Lighthouse tentou interpretar HTML como regra de robots | SEO 0.91 → `robots-txt` | Criado `public/robots.txt` de verdade |
+| `llms.txt` (padrão novo pra crawlers de IA) ausente, mesmo problema de fallback de SPA | Agentic Browsing 0.67 → `llms-txt` | Criado `public/llms.txt` com H1 e links, seguindo a especificação |
+| Cookies de terceiro detectados vindos de `images.unsplash.com` | Best Practices 0.77 → `third-party-cookies`, `inspector-issues` | **Limitação conhecida, não corrigida**: é o próprio CDN da Unsplash que seta esses cookies ao servir a imagem; só some se as imagens forem self-hosted (fora do escopo deste exercício, que usa Unsplash só como banco de imagem de referência) |
+
+> O relatório enviado (`TESTE_2.html`) foi rodado contra o `npm run dev`, então não serve como o "antes" oficial — ele mediu o servidor de desenvolvimento, não o build. Gere os dois prints/PDFs oficiais (`lighthouse-antes.png` e `lighthouse-depois.png`) contra `npm run preview`, seguindo os passos da seção "Como medir": um antes de aplicar as otimizações deste README (pode usar `git stash` ou o commit anterior) e outro depois.
 
 ---
 

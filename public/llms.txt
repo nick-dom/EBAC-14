@@ -1,0 +1,13 @@
+# Nexus Verse
+
+> Portal fictício de jogos indie, construído em React + Vite como exercício do módulo 17 da EBAC. Todos os jogos e estúdios listados são inventados; as imagens de capa são fotos reais do Unsplash usadas só como referência visual.
+
+## Páginas
+
+- [Início](/): apresentação do portal e destaques do catálogo
+- [Catálogo](/catalogo): lista completa de jogos, com busca, filtro por gênero e formulário de cadastro
+- [Sobre](/sobre): contexto do projeto e tecnologias usadas
+
+## Repositório
+
+- [Código-fonte no GitHub](https://github.com/nick-dom/EBAC-14)

@@ -20,7 +20,7 @@
 
   --color-ink: #f1f0ff;
   --color-muted: #9291b5;
-  --color-muted-2: #5f5e80;
+  --color-muted-2: #7f7ea3; /* clareado de #5f5e80: contraste com o fundo passava de 3.18 pra 5.07 (mínimo AA é 4.5) */
 
   --font-display: "Orbitron", "Rajdhani", sans-serif;
   --font-body: "Rajdhani", "Segoe UI", sans-serif;
